@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1">
 <title>Universo de Muñecas</title>
-<meta name="theme-color" content="#075e54">
+<meta name="theme-color" content="#008069">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" href="icon-192.png">
@@ -14,14 +14,14 @@
 fbq('init','966368535823595');fbq('track','PageView');
 </script>
 <style>
-:root{--head:#075e54;--bg:#efeae2;--me:#d9fdd3;--them:#fff;--txt:#111b21;--muted:#667781;--blue:#027eb5;--green:#25d366}
+:root{--head:#008069;--bg:#efeae2;--me:#d9fdd3;--them:#fff;--txt:#111b21;--muted:#667781;--blue:#027eb5;--green:#25d366}
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
 body{font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:#d1d7db;color:var(--txt)}
 .app{max-width:520px;margin:0 auto;height:100%;display:flex;flex-direction:column;background:var(--bg);position:relative}
 .app:before{content:"";position:absolute;inset:0;opacity:.06;pointer-events:none;background-image:radial-gradient(#000 1px,transparent 1px);background-size:18px 18px}
 header{background:var(--head);color:#fff;display:flex;align-items:center;gap:10px;padding:10px 12px;padding-top:calc(10px + env(safe-area-inset-top));position:relative;z-index:2}
-header .av{width:40px;height:40px;border-radius:50%;background:#ffd6e7;display:grid;place-items:center;font-size:22px;flex:none}
+header .av{width:40px;height:40px;border-radius:50%;object-fit:cover;flex:none}
 header b{display:block;font-size:16px}
 header small{font-size:12.5px;opacity:.85}
 #chat{flex:1;overflow-y:auto;padding:12px 10px 8px;position:relative;z-index:1}
@@ -61,8 +61,8 @@ footer{position:relative;z-index:2;padding:8px 8px calc(10px + env(safe-area-ins
 <body>
 <div class="app">
   <header>
-    <div class="av">🎀</div>
-    <div><b>Sofía · Universo de Muñecas</b><small id="status">en línea</small></div>
+    <img class="av" src="avatar.jpg" alt="Sofía">
+    <div><b>Sofía Hernández</b><small id="status">en línea</small></div>
   </header>
   <div id="chat"><div class="day">HOY</div></div>
   <footer id="opts"><span class="hint">Cargando…</span></footer>
@@ -78,6 +78,7 @@ const SPEED=/fast=1/.test(location.search)?0.01:1;
 
 // ===== estado =====
 const KEY='umflow2';
+if(/reset=1/.test(location.search)){try{localStorage.removeItem(KEY)}catch(e){}}
 const st=(()=>{try{return JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){return {}}})();
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}};
 const qs=new URLSearchParams(location.search);
@@ -86,14 +87,14 @@ const withUtm=l=>{const u=new URL(l);for(const [a,b] of Object.entries(st.utm||{
 
 const chat=document.getElementById('chat'),opts=document.getElementById('opts'),status=document.getElementById('status');
 const now=()=>new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
-let last=null;
+let last=null,shown=0;
 const sleep=ms=>new Promise(r=>setTimeout(r,ms*SPEED));
 const down=()=>{chat.scrollTop=chat.scrollHeight};
 const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
-const fmt=s=>esc(s).replace(/\*([^*\n]+)\*/g,'<b>$1</b>').replace(/(^|\s)_([^_\n]+)_/g,'$1<i>$2</i>').replace(/~([^~\n]+)~/g,'<s>$1</s>');
+const fmt=s=>esc(s).replace(/(https?:\/\/[^\s<]+)/g,'\n<a href="$1" target="_blank" rel="noopener" style="color:#027eb5;word-break:break-all">$1</a>\n').replace(/\n{3,}/g,'\n\n').replace(/\*([^*\n]+)\*/g,'<b>$1</b>').replace(/(^|\s)_([^_\n]+)_/g,'$1<i>$2</i>').replace(/~([^~\n]+)~/g,'<s>$1</s>');
 const clean=s=>String(s).replace(/\{(first_name|full_name|name|nome|primeiro_nome)\}/gi,'').replace(/ +([,!?.])/g,'$1').replace(/[ \t]{2,}/g,' ');
 function persist(){st.html=chat.innerHTML;save()}
-function add(html,who='them',cls=''){const r=document.createElement('div');r.className='row '+(who==='me'?'me ':'')+(last!==who?'first ':'')+cls;last=who;r.innerHTML=`<div class="b">${html}<span class="t">${now()}</span></div>`;chat.appendChild(r);down();persist();return r}
+function add(html,who='them',cls=''){shown=1;const r=document.createElement('div');r.className='row '+(who==='me'?'me ':'')+(last!==who?'first ':'')+cls;last=who;r.innerHTML=`<div class="b">${html}<span class="t">${now()}</span></div>`;chat.appendChild(r);down();persist();return r}
 async function typing(ms,rec){status.textContent=rec?'grabando audio...':'escribiendo...';const r=document.createElement('div');r.className='row typing';r.innerHTML='<div class="b"><i></i><i></i><i></i></div>';chat.appendChild(r);down();await sleep(ms);r.remove();status.textContent='en línea'}
 function mark(el){el.classList.add('ok');el.querySelector('.dl').textContent='✓';persist()}
 function payClick(v){fbq('track','InitiateCheckout',{value:v,currency:'MXN'});st.payClicked=1;save()}
@@ -102,6 +103,9 @@ const fmtSize=b=>b?(b>1e6?Math.round(b/1e6)+' MB':Math.round(b/1e3)+' kB'):'';
 
 // ===== motor del funil =====
 let F,N;
+const CLABE='734180009421954294';
+function copyClabe(el){try{navigator.clipboard.writeText(CLABE)}catch(e){}el.textContent='✅ CLABE copiada'}
+function oxxo(el,u){const d=document.createElement('div');d.className='payf';d.innerHTML='<iframe src="'+u+'"></iframe>';el.replaceWith(d);el.closest&&0;setTimeout(()=>d.scrollIntoView({behavior:'smooth'}),100);persist()}
 const SKIP=new Set(['start','tags','pixel','approved_sale','notification','manipulator','chat_controller','integration','connection_flow']);
 const conn=(n,label)=>(n.c.find(c=>c[1]===label)||[])[0];
 const first=n=>(n.c.find(c=>c[1]!=='timeout'&&c[1]!=='error'&&c[1]!=='failure')||n.c[0]||[])[0];
@@ -109,8 +113,8 @@ const first=n=>(n.c.find(c=>c[1]!=='timeout'&&c[1]!=='error'&&c[1]!=='failure')|
 async function runActions(n){
   for(const a of n.a){
     switch(a.k){
-      case 'd': await sleep(Math.min(a.s||2,25)*1000); break;
-      case 'msg': { if(/\{[a-z_.]+\}/i.test(clean(a.t)))break; const t=clean(a.t).trim(); if(!t)break; await sleep(700+Math.random()*900); await typing(a.td?Math.min(a.td,12)*1000:Math.max(1800,Math.min(7000,t.length*45))); add(fmt(t)); break; }
+      case 'd': if(!shown)break; await sleep(Math.min(a.s||2,8)*1000); break;
+      case 'msg': { if(/\{[a-z_.]+\}/i.test(clean(a.t)))break; const t=clean(a.t).trim(); if(!t)break; if(shown)await sleep(700+Math.random()*900); await typing(!shown?1500:a.td?Math.min(a.td,12)*1000:Math.max(1800,Math.min(7000,t.length*45))); add(fmt(t)); break; }
       case 'image': await sleep(1200); await typing(2500); add(`<img src="${a.u}" alt="" loading="lazy">${a.cap?fmt(clean(a.cap)):''}`); break;
       case 'video': await typing(1200); add(`<video src="${a.u}" controls playsinline style="width:100%;max-width:300px;border-radius:6px"></video>`); break;
       case 'audio': await sleep(900); await typing(6000+Math.random()*3000,true); add(`<audio src="${a.u}" controls preload="none"></audio>`); break;
@@ -159,7 +163,13 @@ async function step(id){
         await typing(2200);
       }
       const [v,l]=btns[0];
-      add('Aquí puedes hacer tu pago de <b>$'+v+' MXN</b> por <b>SPEI u OXXO</b> sin salir de la conversación 👇<div class="payf"><iframe src="'+withUtm(l)+'" loading="lazy"></iframe></div>');
+      add(fmt('Tu aporte es de *$'+v+' MXN* 💕 Puedes pagar por transferencia SPEI a esta cuenta:'));
+      await sleep(1200); await typing(3500);
+      add(fmt('🏦 *CLABE* (18 dígitos):\n'+CLABE+'\n*Banco*: FINCO PAY\n*Beneficiario*: Zypher Servicios\n*Persona*: Sofía Hernández'));
+      await sleep(1500); await typing(1500);
+      add(CLABE+'<a class="cta" href="#" onclick="copyClabe(this);return false">📋 Copiar CLABE</a>');
+      await sleep(1500); await typing(3000);
+      add('O, si lo prefieres, realiza tu pago mediante OXXO a continuación 👇🏻<a class="cta" href="#" onclick="oxxo(this,\''+withUtm(l)+'\');return false">🏪 Pagar en OXXO</a>');
       payClick(v);
       st.lastPay=id; save();
     }
@@ -173,7 +183,7 @@ async function run(from){
   let id=from,guard=0;
   while(id&&guard++<300){id=await step(id)}
   st.end=1;save();
-  opts.innerHTML='<span class="hint">📌 Tus archivos quedan guardados en esta conversación</span>';
+  opts.innerHTML='<span class="hint">📌 Tus archivos quedan guardados en esta conversación</span><button class="qr" onclick="restart()">🔄 Empezar de nuevo</button>';
 }
 
 (async()=>{
@@ -181,7 +191,7 @@ async function run(from){
   if(st.html&&st.node){
     chat.innerHTML=st.html;last=null;down();
     const n=N[st.node];
-    if(st.end){opts.innerHTML='<span class="hint">📌 Tus archivos quedan guardados en esta conversación</span>';return}
+    if(st.end){opts.innerHTML='<span class="hint">📌 Tus archivos quedan guardados en esta conversación</span><button class="qr" onclick="restart()">🔄 Empezar de nuevo</button>';return}
     run(st.node); // retoma en la última pregunta
     return;
   }
@@ -189,6 +199,7 @@ async function run(from){
   await sleep(600);
   run(F.start);
 })();
+function restart(){try{localStorage.removeItem(KEY)}catch(e){}location.href=location.pathname}
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
 </body>
