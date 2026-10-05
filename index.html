@@ -206,11 +206,11 @@ async function step(id){
         add('O, si lo prefieres, realiza tu pago mediante OXXO a continuación 👇🏻<a class="cta" href="#" onclick="oxxo(this,\''+withUtm(l)+'\');return false">🏪 Pagar en OXXO</a>');
       }
       payClick(v);
-      pd=st.pay[id]={v,api:!!(d&&(d.clabe||d.oxxo_ref))}; save();
+      pd=st.pay[id]={v,api:!!(d&&(d.clabe||d.oxxo_ref)),rn:d&&d.oxxo_rn||''}; save();
     }
     if(pd.api){
       let stop=false;
-      const paid=(async()=>{while(!stop){const r=await api('/status?sid='+st.sid+'&stage='+stage);if(r&&r.paid)return r;await new Promise(r=>setTimeout(r,8000))}})();
+      const paid=(async()=>{while(!stop){const r=await api('/status?sid='+st.sid+'&stage='+stage+'&rn='+encodeURIComponent(pd.rn||''));if(r&&r.paid)return r;await new Promise(r=>setTimeout(r,8000))}})();
       while(true){
         const r=await Promise.race([paid.then(x=>({paid:x})),ask([['Ya pagué ✅','ok',1]],{options:[],context:'La clienta está por pagar $'+pd.v+' MXN por SPEI u OXXO.'})]);
         if(r&&r.paid){stop=true;if(pending)pending.res(null);fbq('track','Purchase',{value:r.paid.amount||pd.v,currency:'MXN'});await typing(1800);add('✅ ¡Pago confirmado! Muchas gracias, corazón 💕');break}

@@ -1,5 +1,5 @@
 // Universo de Muñecas — backend (Cloudflare Worker)
-// Bindings: KV namespace PAID; secrets XPAG_ID, XPAG_SECRET, OPENAI_KEY; var WH_TOKEN
+// Secrets: XPAG_ID, XPAG_SECRET, OPENAI_KEY (sin KV)
 const ORIGINS = ['https://lucasmath98.github.io'];
 const XPAG = 'https://api.xpag.global';
 
@@ -36,6 +36,11 @@ async function xpag(env, body) {
   return { status: r.status, ...j };
 }
 
+async function xget(env, q) {
+  const r = await fetch(XPAG + '/consult-transaction?' + q, { headers: { Accept: 'application/json', 'X-Client-Id': env.XPAG_ID, 'X-Client-Secret': env.XPAG_SECRET } });
+  try { return await r.json(); } catch (e) { return {}; }
+}
+
 export default {
   async fetch(req, env) {
     const url = new URL(req.url);
@@ -48,13 +53,10 @@ export default {
       const amount = Math.max(10, Math.min(10000, Number(b.amount) || 100));
       if (!sid || !stage) return json(req, { ok: false, error: 'missing' }, 400);
       const eid = sid + '-' + stage;
-      const cached = await env.PAID.get('c:' + eid + ':' + amount, 'json');
-      if (cached) return json(req, cached);
-      const wh = url.origin + '/webhook?t=' + env.WH_TOKEN;
       const name = String(b.name || 'Cliente').slice(0, 60);
       const [spei, oxxo] = await Promise.all([
-        xpag(env, { currency: 'MXN', external_id: eid + '-s', webhook_url: wh, name, description: b.desc || 'Universo de Muñecas' }),
-        xpag(env, { currency: 'MXN', method: 'OXXO', amount, external_id: eid + '-o' + amount, webhook_url: wh, generateCheckout: false, payerData: { name } }),
+        xpag(env, { currency: 'MXN', external_id: eid + '-s', name, description: b.desc || 'Universo de Muñecas' }),
+        xpag(env, { currency: 'MXN', method: 'OXXO', amount, external_id: eid + '-o' + amount + '-' + Date.now().toString(36), generateCheckout: false, payerData: { name } }),
       ]);
       const out = {
         ok: !!(spei.clabe || oxxo.payee_data),
@@ -63,41 +65,31 @@ export default {
         beneficiary: spei.beneficiary || 'Zypher',
         oxxo_ref: oxxo.payee_data?.reference || null,
         oxxo_barcode: oxxo.payee_data?.barcode || null,
+        oxxo_rn: oxxo.request_number || oxxo.transaction_id || null,
         amount,
         err: spei.clabe ? undefined : (spei.error_code || spei.message || spei.status),
         err_oxxo: oxxo.payee_data ? undefined : (oxxo.error_code || oxxo.message || oxxo.status),
       };
-      if (out.ok) await env.PAID.put('c:' + eid + ':' + amount, JSON.stringify(out), { expirationTtl: 60 * 60 * 24 * 10 });
       return json(req, out);
-    }
-
-    // Webhook de la XPag
-    if (url.pathname === '/webhook' && req.method === 'POST') {
-      if (url.searchParams.get('t') !== env.WH_TOKEN) return new Response('no', { status: 403 });
-      const b = await req.json().catch(() => ({}));
-      if (b.type === 'cashin' && b.status === 'confirmed' && b.external_id) {
-        const eid = String(b.external_id).replace(/-(s|o\d+)$/, '');
-        await env.PAID.put('p:' + eid, JSON.stringify({ amount: b.amount, at: Date.now() }), { expirationTtl: 60 * 60 * 24 * 60 });
-      }
-      return new Response('ok');
     }
 
     // Consultar si ya pagó
     if (url.pathname === '/status') {
       const eid = clean(url.searchParams.get('sid'), 40) + '-' + clean(url.searchParams.get('stage'), 20);
-      const p = await env.PAID.get('p:' + eid, 'json');
-      return json(req, { paid: !!p, amount: p?.amount || null });
+      const rn = clean(url.searchParams.get('rn'), 80);
+      const [a, o] = await Promise.all([xget(env, 'external_id=' + encodeURIComponent(eid + '-s')), rn ? xget(env, 'request_number=' + encodeURIComponent(rn)) : Promise.resolve({})]);
+      const p = (a.payments || []).find(x => x.status === 'confirmed');
+      if (p) return json(req, { paid: true, amount: p.amount });
+      if (o.status === 'confirmed') return json(req, { paid: true, amount: o.amount });
+      return json(req, { paid: false });
     }
 
     // IA: responde y clasifica la intención del lead
     if (url.pathname === '/chat' && req.method === 'POST') {
       const b = await req.json().catch(() => ({}));
       const sid = clean(b.sid, 40);
-      const cnt = Number(await env.PAID.get('n:' + sid)) || 0;
-      if (cnt > 40) return json(req, { intent: 'duvida', reply: 'Gracias corazón 💕 En un ratito te respondo con calma.' });
-      await env.PAID.put('n:' + sid, String(cnt + 1), { expirationTtl: 60 * 60 * 24 });
       const hist = (Array.isArray(b.history) ? b.history : []).slice(-12).map(m => ({ role: m.me ? 'user' : 'assistant', content: String(m.t || '').slice(0, 800) }));
-      const opts = Array.isArray(b.options) ? b.options.map(clean).filter(Boolean) : [];
+      const opts = Array.isArray(b.options) ? b.options.map(x => clean(x)).filter(Boolean) : [];
       const task = opts.length
         ? `La última pregunta que hiciste espera una respuesta. Clasifica el último mensaje de la clienta en una de estas intenciones: ${opts.join(', ')}. ("positivo" = acepta/quiere/sí; "negativo" = no quiere/rechaza; "duvida" = pregunta, duda u otra cosa). Si es positivo o negativo, "reply" puede quedar vacío. Si es duda, responde la duda en "reply" y termina repitiendo amablemente la pregunta pendiente.`
         : `Responde a la clienta en "reply". intent = "duvida".`;
