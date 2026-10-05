@@ -49,7 +49,12 @@ header small{font-size:12.5px;opacity:.85}
 .typing i{display:inline-block;width:7px;height:7px;margin:0 2px;border-radius:50%;background:#8696a0;animation:bl 1.2s infinite}
 .typing i:nth-child(2){animation-delay:.2s}.typing i:nth-child(3){animation-delay:.4s}
 @keyframes bl{0%,60%,100%{opacity:.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
-footer{position:relative;z-index:2;padding:8px 8px calc(10px + env(safe-area-inset-bottom));display:flex;flex-wrap:wrap;gap:8px;justify-content:center;min-height:60px;align-items:center;background:#f0f2f5}
+#opts{position:relative;z-index:2;padding:6px 8px 2px;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center}
+#opts:empty{display:none}
+.bar{position:relative;z-index:2;display:flex;gap:6px;padding:6px 8px calc(8px + env(safe-area-inset-bottom));background:#f0f2f5}
+.bar input{flex:1;border:0;border-radius:22px;padding:12px 16px;font-size:16px;outline:none;background:#fff}
+.bar button{width:46px;height:46px;border-radius:50%;border:0;background:var(--head);color:#fff;font-size:18px;flex:none;cursor:pointer}
+.oxxo img{background:#fff;padding:6px;border-radius:6px}
 .qr{background:#fff;border:0;border-radius:20px;padding:12px 18px;font-size:15px;font-weight:600;color:var(--head);box-shadow:0 1px 2px rgba(0,0,0,.2);cursor:pointer}
 .qr.main{background:var(--green);color:#fff}
 .payf{margin:8px -4px 2px;border-radius:8px;overflow:hidden;background:#fff;border:1px solid #e9edef}
@@ -65,7 +70,8 @@ footer{position:relative;z-index:2;padding:8px 8px calc(10px + env(safe-area-ins
     <div><b>Sofía Hernández</b><small id="status">en línea</small></div>
   </header>
   <div id="chat"><div class="day">HOY</div></div>
-  <footer id="opts"><span class="hint">Cargando…</span></footer>
+  <div id="opts"><span class="hint">Cargando…</span></div>
+  <form class="bar" id="bar" onsubmit="onSend(event)"><input id="inp" placeholder="Mensaje" autocomplete="off" enterkeyhint="send"><button id="send" aria-label="Enviar">➤</button></form>
 </div>
 
 <script>
@@ -74,14 +80,18 @@ footer{position:relative;z-index:2;padding:8px 8px calc(10px + env(safe-area-ins
 const PAY_LINKS={100:'https://xpag.global/pay/6434HTwf',150:'https://xpag.global/pay/5A3ngMbV',200:'https://xpag.global/pay/bemI94to',250:'https://xpag.global/pay/8Qy2DuT2'};
 // Upsell actividades (cambiar cuando exista su link propio)
 const UPSELL_NODES_FROM=5267213, UPSELL_LINK='https://xpag.global/pay/6434HTwf';
+// URL del servidor (Cloudflare Worker). Vacío = modo sin servidor
+const API='https://universo-munecas.nocaminhocerto20.workers.dev';
 const SPEED=/fast=1/.test(location.search)?0.01:1;
 
 // ===== estado =====
-const KEY='umflow2';
+const KEY='umflow3';
 if(/reset=1/.test(location.search)){try{localStorage.removeItem(KEY)}catch(e){}}
 const st=(()=>{try{return JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){return {}}})();
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}};
 const qs=new URLSearchParams(location.search);
+if(!st.sid){st.sid=Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4);}
+if(!st.hist)st.hist=[];
 if(!st.utm){st.utm={};for(const [k,v] of qs)if(/^(utm_|fbclid|src|sck|xcod)/.test(k))st.utm[k]=v;save()}
 const withUtm=l=>{const u=new URL(l);for(const [a,b] of Object.entries(st.utm||{}))u.searchParams.set(a,b);return u.toString()};
 
@@ -94,17 +104,33 @@ const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
 const fmt=s=>esc(s).replace(/(https?:\/\/[^\s<]+)/g,'\n<a href="$1" target="_blank" rel="noopener" style="color:#027eb5;word-break:break-all">$1</a>\n').replace(/\n{3,}/g,'\n\n').replace(/\*([^*\n]+)\*/g,'<b>$1</b>').replace(/(^|\s)_([^_\n]+)_/g,'$1<i>$2</i>').replace(/~([^~\n]+)~/g,'<s>$1</s>');
 const clean=s=>String(s).replace(/\{(first_name|full_name|name|nome|primeiro_nome)\}/gi,'').replace(/ +([,!?.])/g,'$1').replace(/[ \t]{2,}/g,' ');
 function persist(){st.html=chat.innerHTML;save()}
-function add(html,who='them',cls=''){shown=1;const r=document.createElement('div');r.className='row '+(who==='me'?'me ':'')+(last!==who?'first ':'')+cls;last=who;r.innerHTML=`<div class="b">${html}<span class="t">${now()}</span></div>`;chat.appendChild(r);down();persist();return r}
+function add(html,who='them',cls=''){shown=1;const r=document.createElement('div');r.className='row '+(who==='me'?'me ':'')+(last!==who?'first ':'')+cls;last=who;r.innerHTML=`<div class="b">${html}<span class="t">${now()}</span></div>`;chat.appendChild(r);down();try{const t=r.querySelector('.b').innerText.replace(/\s*\d{1,2}:\d{2}.*$/,'').trim();if(t){st.hist.push({me:who==='me',t:t.slice(0,600)});st.hist=st.hist.slice(-20)}}catch(e){}persist();return r}
 async function typing(ms,rec){status.textContent=rec?'grabando audio...':'escribiendo...';const r=document.createElement('div');r.className='row typing';r.innerHTML='<div class="b"><i></i><i></i><i></i></div>';chat.appendChild(r);down();await sleep(ms);r.remove();status.textContent='en línea'}
 function mark(el){el.classList.add('ok');el.querySelector('.dl').textContent='✓';persist()}
 function payClick(v){fbq('track','InitiateCheckout',{value:v,currency:'MXN'});st.payClicked=1;save()}
-function ask(list){opts.innerHTML='';return new Promise(res=>{for(const [label,val,main] of list){const b=document.createElement('button');b.className='qr'+(main?' main':'');b.textContent=label;b.onclick=()=>{opts.innerHTML='';add(esc(label),'me');res(val)};opts.appendChild(b)}})}
+let pending=null;
+function ask(list,ai){opts.innerHTML='';return new Promise(res=>{pending={list,ai,res:v=>{pending=null;opts.innerHTML='';res(v)}};for(const [label,val,main] of list){const b=document.createElement('button');b.className='qr'+(main?' main':'');b.textContent=label;b.onclick=()=>{add(esc(label),'me');pending&&pending.res(val)};opts.appendChild(b)}})}
+async function api(path,body){if(!API)return null;try{const r=await fetch(API+path,body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}:{});return await r.json()}catch(e){return null}}
+const lastThem=()=>{const h=st.hist.filter(x=>!x.me);return h.length?h[h.length-1].t:''};
+let busy=false;
+async function onSend(e){e.preventDefault();const inp=document.getElementById('inp');const text=inp.value.trim();if(!text)return;inp.value='';add(fmt(text),'me');
+  while(busy)await new Promise(r=>setTimeout(r,300));
+  const p=pending;
+  if(p&&!p.ai){p.res(p.list[0][1]);return}
+  busy=true;
+  try{
+    const r=await api('/chat',{sid:st.sid,text,history:st.hist.slice(0,-1),options:p&&p.ai?p.ai.options:[],context:(p&&p.ai&&p.ai.context)||lastThem()});
+    if(!r){ if(p&&p.ai&&p.ai.options.length){p.res(p.ai.map.positivo);return} await typing(1500);add('¡Gracias, corazón! 💕');return }
+    if(p&&p.ai&&p.ai.map&&p.ai.map[r.intent]!==undefined&&pending===p){p.res(p.ai.map[r.intent]);return}
+    if(r.reply){await sleep(800);await typing(Math.max(1500,Math.min(6000,r.reply.length*40)));add(fmt(r.reply))}
+  }finally{busy=false}
+}
 const fmtSize=b=>b?(b>1e6?Math.round(b/1e6)+' MB':Math.round(b/1e3)+' kB'):'';
 
 // ===== motor del funil =====
 let F,N;
 const CLABE='734180009421954294';
-function copyClabe(el){try{navigator.clipboard.writeText(CLABE)}catch(e){}el.textContent='✅ CLABE copiada'}
+function copyClabe(el){try{navigator.clipboard.writeText(st.clabe||CLABE)}catch(e){}el.textContent='✅ CLABE copiada'}
 function oxxo(el,u){const d=document.createElement('div');d.className='payf';d.innerHTML='<iframe src="'+u+'"></iframe>';el.replaceWith(d);el.closest&&0;setTimeout(()=>d.scrollIntoView({behavior:'smooth'}),100);persist()}
 const SKIP=new Set(['start','tags','pixel','approved_sale','notification','manipulator','chat_controller','integration','connection_flow']);
 const conn=(n,label)=>(n.c.find(c=>c[1]===label)||[])[0];
@@ -126,7 +152,7 @@ async function runActions(n){
 function payButtons(n,id){
   const p=n.a.find(a=>a.k==='pay');const amt=+p.amt;
   if(id>=UPSELL_NODES_FROM) return [[amt,UPSELL_LINK]];
-  if(p.open) return [100,150,200].map(v=>[v,PAY_LINKS[v]]);
+  if(p.open) return [100,150,200,250].map(v=>[v,PAY_LINKS[v]]);
   return [[amt,PAY_LINKS[amt]||PAY_LINKS[100]]];
 }
 async function step(id){
@@ -143,7 +169,7 @@ async function step(id){
   if(n.t==='ai'){
     const pos=conn(n,'positivo'),neg=conn(n,'negativo'),comp=conn(n,'comprovante');
     if(pos||neg){
-      const r=await ask([['¡Sí, claro! 💕','p',1],...(neg?[['No, gracias','n']]:[])]);
+      const r=await ask([['¡Sí, claro! 💕','p',1],...(neg?[['No, gracias','n']]:[])],{options:neg?['positivo','negativo','duvida']:['positivo','duvida'],map:neg?{positivo:'p',negativo:'n'}:{positivo:'p'},context:lastThem()});
       if(r==='p'&&!st.lead){st.lead=1;save();fbq('track','Lead')}
       return r==='p'?pos:neg;
     }
@@ -153,28 +179,47 @@ async function step(id){
   if(n.t==='payment'){
     // segunda cobranza encadenada (SPEI→OXXO): se une a la anterior
     if(st.lastPay&&st.lastPayChain){st.lastPayChain=0;save();return conn(n,'charge_created')}
-    const btns=payButtons(n,id);
-    if(st.lastPay!==id){
+    const btns=payButtons(n,id); st.pay=st.pay||{};
+    const stage='p'+id;
+    let pd=st.pay[id];
+    if(!pd){
       await sleep(900); await typing(2500);
       if(btns.length>1){
         add('Puedes elegir el valor de tu cooperación 👇');
         const v=await ask(btns.map(([v],i)=>['$'+v+' MXN',v,i===0]));
         btns.splice(0,btns.length,btns.find(b=>b[0]===v));
-        await typing(2200);
       }
       const [v,l]=btns[0];
-      add(fmt('Tu aporte es de *$'+v+' MXN* 💕 Puedes pagar por transferencia SPEI a esta cuenta:'));
-      await sleep(1200); await typing(3500);
-      add(fmt('🏦 *CLABE* (18 dígitos):\n'+CLABE+'\n*Banco*: FINCO PAY\n*Beneficiario*: Zypher Servicios\n*Persona*: Sofía Hernández'));
+      await sleep(600); await typing(2500);
+      const d=await api('/charge',{sid:st.sid,stage,amount:v,desc:id>=UPSELL_NODES_FROM?'Kit de Actividades Creativas':'Universo de Muñecas'});
+      const clabe=(d&&d.clabe)||CLABE;
+      st.clabe=clabe;
+      add(fmt('🏦 *CLABE* (18 dígitos):\n'+clabe+'\n*Banco*: '+((d&&d.clabe&&d.bank)||'FINCO PAY')+'\n*Beneficiario*: '+((d&&d.clabe&&d.beneficiary)||'Zypher Servicios')+'\n*Persona*: Sofía Hernández'));
       await sleep(1500); await typing(1500);
-      add(CLABE+'<a class="cta" href="#" onclick="copyClabe(this);return false">📋 Copiar CLABE</a>');
+      add(clabe+'<a class="cta" href="#" onclick="copyClabe(this);return false">📋 Copiar CLABE</a>');
       await sleep(1500); await typing(3000);
-      add('O, si lo prefieres, realiza tu pago mediante OXXO a continuación 👇🏻<a class="cta" href="#" onclick="oxxo(this,\''+withUtm(l)+'\');return false">🏪 Pagar en OXXO</a>');
+      if(d&&d.oxxo_ref){
+        add('O, si lo prefieres, realiza tu pago mediante OXXO a continuación 👇🏻');
+        await sleep(1200); await typing(2000);
+        add('<div class="oxxo">'+(d.oxxo_barcode?'<img src="'+d.oxxo_barcode+'" alt="">':'')+'</div>'+fmt('🏪 *OXXO* · Referencia:\n'+d.oxxo_ref+'\nMonto exacto: *$'+v+' MXN*'));
+      }else{
+        add('O, si lo prefieres, realiza tu pago mediante OXXO a continuación 👇🏻<a class="cta" href="#" onclick="oxxo(this,\''+withUtm(l)+'\');return false">🏪 Pagar en OXXO</a>');
+      }
       payClick(v);
-      st.lastPay=id; save();
+      pd=st.pay[id]={v,api:!!(d&&(d.clabe||d.oxxo_ref))}; save();
     }
-    let r=await ask([['Ya pagué ✅','ok',1],['Pago más tarde','later']]);
-    if(r==='later'){await typing(1200);add('¡Sin problema, corazón! 💜 Cuando hagas tu pago, regresa aquí y toca <b>"Ya pagué"</b>.');await ask([['Ya pagué ✅','ok',1]])}
+    if(pd.api){
+      let stop=false;
+      const paid=(async()=>{while(!stop){const r=await api('/status?sid='+st.sid+'&stage='+stage);if(r&&r.paid)return r;await new Promise(r=>setTimeout(r,8000))}})();
+      while(true){
+        const r=await Promise.race([paid.then(x=>({paid:x})),ask([['Ya pagué ✅','ok',1]],{options:[],context:'La clienta está por pagar $'+pd.v+' MXN por SPEI u OXXO.'})]);
+        if(r&&r.paid){stop=true;if(pending)pending.res(null);fbq('track','Purchase',{value:r.paid.amount||pd.v,currency:'MXN'});await typing(1800);add('✅ ¡Pago confirmado! Muchas gracias, corazón 💕');break}
+        await sleep(600);await typing(2200);add('¡Gracias, corazón! 🙏 Estoy validando tu pago, en cuanto se confirme te aviso aquí mismo 💕');
+      }
+    }else{
+      let r=await ask([['Ya pagué ✅','ok',1],['Pago más tarde','later']]);
+      if(r==='later'){await typing(1200);add('¡Sin problema, corazón! 💜 Cuando hagas tu pago, regresa aquí y toca <b>"Ya pagué"</b>.');await ask([['Ya pagué ✅','ok',1]])}
+    }
     st.lastPayChain=0;save();return conn(n,'payment_approved');
   }
   return first(n);
