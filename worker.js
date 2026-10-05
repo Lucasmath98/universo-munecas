@@ -123,7 +123,7 @@ export default {
       let phone = String(b.phone || '').replace(/\D/g, '');
       if (phone.length === 10) phone = '52' + phone;
       if (phone.length === 13 && phone.startsWith('521')) phone = '52' + phone.slice(3);
-      if (!/^52\d{10}$/.test(phone) || !env.LEONA_WH) return json(req, { ok: false });
+      if (!(/^52\d{10}$/.test(phone) || /^55\d{10,11}$/.test(phone)) || !env.LEONA_WH) return json(req, { ok: false });
       const r = await fetch(env.LEONA_WH, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nome: String(b.name || 'Cliente').slice(0, 60), telefone: phone, valor: String(Number(b.amount) || ''), origem: 'app', sid: clean(b.sid, 40) }) }).catch(() => null);
       return json(req, { ok: !!(r && r.ok) });
     }

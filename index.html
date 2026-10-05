@@ -63,6 +63,13 @@ header small{font-size:12.5px;opacity:.85}
 .payf{margin:8px -4px 2px;border-radius:8px;overflow:hidden;background:#fff;border:1px solid #e9edef}
 .payf iframe{display:block;width:100%;height:640px;border:0}
 .row:has(.payf) .b{max-width:96%;width:96%}
+.waf{display:flex;gap:6px;align-items:center;margin-top:8px;white-space:normal}
+.waf select{background:#f0f2f5;border:0;border-radius:8px;padding:10px 4px;font-weight:600;font-size:15px;flex:none}
+.waf span{background:#f0f2f5;border-radius:8px;padding:10px 8px;font-weight:600;font-size:15px;flex:none}
+.waf input{flex:1;min-width:0;border:1px solid #d1d7db;border-radius:8px;padding:10px;font-size:16px;outline:none}
+.waf button{border:0;border-radius:8px;background:var(--head);color:#fff;padding:10px 12px;font-weight:700}
+.waf :disabled{opacity:.5}
+.wah{display:block;color:#c0392b;font-size:12px;white-space:normal}
 .hint{color:var(--muted);font-size:13px;text-align:center}
 </style>
 </head>
@@ -161,15 +168,29 @@ function payButtons(n,id){
 }
 async function askWhats(q,labels){
   await sleep(1200); await typing(2200);
-  add(q);
-  const w=await ask([[labels[0],'y',1],[labels[1],'n']],{capture:true});
-  let num=null;
-  const wd=(w&&w[0]==='#')?w.slice(1).replace(/\D/g,''):'';
-  if(wd.length>=10)num=wd;
-  else if(w==='y'||(w&&w[0]==='#')){await typing(1500);add('¡Claro! Escríbeme tu número de WhatsApp a 10 dígitos 👇 (ej: 55 1234 5678)');
-    for(let k=0;k<3&&!num;k++){const t=await ask([],{capture:true});const d=String(t).replace(/\D/g,'');if(d.length===10||(d.length===12&&d.startsWith('52'))||(d.length===13&&d.startsWith('521'))){num=d}else{await typing(1200);add('Mmm, parece que falta algún número 🤔 Escríbelo a 10 dígitos, por ejemplo: 55 1234 5678')}}
-  }
-  if(num){st.wa=num;save();await typing(1500);add('¡Gracias, corazón! 💕 Ya lo guardé.')}else{st.wa='no';save()}
+  const fid='wa'+Date.now();
+  add(q+'<form class="waf" id="'+fid+'" onsubmit="return false"><select><option value="52">🇲🇽 +52</option><option value="55">🇧🇷 +55</option></select><input type="tel" inputmode="numeric" maxlength="14" placeholder="55 1234 5678"><button>Enviar</button></form><small class="wah" id="'+fid+'h"></small>');
+  const form=document.getElementById(fid),inp=form.querySelector('input'),hint=document.getElementById(fid+'h');
+  const norm=(t,cc)=>{let d=String(t||'').replace(/\D/g,'');cc=cc||'52';
+    if(d.startsWith('55')&&(d.length===12||d.length===13))return d;
+    if(d.startsWith('521')&&d.length===13)return '52'+d.slice(3);
+    if(d.startsWith('52')&&d.length===12)return d;
+    if(cc==='55'&&(d.length===10||d.length===11))return '55'+d;
+    if(cc==='52'&&d.length===10)return '52'+d;
+    return null};
+  const cc=()=>form.querySelector('select').value;
+  let timer,done=false;
+  const num=await new Promise(res=>{
+    const finish=v=>{if(done)return;done=true;clearTimeout(timer);res(v)};
+    form.querySelector('button').onclick=()=>{const d=norm(inp.value,cc());if(inp.value.trim())add(esc(d?'+'+d:inp.value),'me');if(pending&&pending.ai&&pending.ai.capture)pending.res(null);finish(d)};
+    inp.addEventListener('input',()=>{clearTimeout(timer);timer=setTimeout(()=>finish(null),SPEED<1?2000:30000)});
+    timer=setTimeout(()=>finish(null),SPEED<1?2000:30000);
+    ask([[labels[1],'n']],{capture:true}).then(w=>{if(done)return;if(w&&w[0]==='#'){const d=norm(w.slice(1),cc());finish(d)}else finish(null)});
+  });
+  try{form.querySelectorAll('input,button').forEach(e=>e.disabled=true)}catch(e){}
+  if(pending&&pending.ai&&pending.ai.capture)pending.res(null);
+  if(num){st.wa=num;save();await typing(1500);add('¡Gracias, corazón! 💕 Ya lo guardé.')}else{st.wa='no';save();await typing(1200);add('¡Listo, corazón! 💕 Sigamos.')}
+  persist();
   return num;
 }
 async function step(id){
