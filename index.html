@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="es-MX">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Universo de Muñecas</title>
+<meta name="theme-color" content="#e9447a">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+<!-- Meta Pixel (BONECA) -->
+<script>
+!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+fbq('init','966368535823595');fbq('track','PageView');
+</script>
+<style>
+:root{--rosa:#e9447a;--rosa2:#ff8fb3;--lila:#8b5cf6;--crema:#fff6fa;--txt:#3b2340;--muted:#7d6680;--verde:#16a34a}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Nunito,system-ui,sans-serif;background:var(--crema);color:var(--txt);max-width:520px;margin:0 auto;min-height:100vh;padding-bottom:40px}
+h1,h2,h3{font-family:'Baloo 2',system-ui,sans-serif;line-height:1.1}
+.hero{background:linear-gradient(160deg,var(--rosa),var(--lila));color:#fff;padding:34px 20px 70px;border-radius:0 0 32px 32px;text-align:center;position:relative}
+.hero .em{font-size:64px}
+.hero h1{font-size:34px;margin:6px 0 8px}
+.hero p{opacity:.95;font-size:16px}
+.pill{display:inline-block;background:#fff;color:var(--rosa);font-weight:700;border-radius:99px;padding:6px 14px;font-size:13px;margin-top:14px}
+.wrap{padding:0 16px;margin-top:-46px;position:relative}
+.card{background:#fff;border-radius:22px;padding:20px;box-shadow:0 8px 28px rgba(139,92,246,.13);margin-bottom:18px}
+.card h2{font-size:24px;margin-bottom:8px}
+.list{list-style:none;margin:12px 0}
+.list li{padding:7px 0;display:flex;gap:10px;align-items:flex-start}
+.btn{display:block;width:100%;border:0;border-radius:16px;padding:17px;font:800 18px 'Baloo 2',sans-serif;color:#fff;background:linear-gradient(90deg,var(--rosa),var(--lila));text-align:center;text-decoration:none;cursor:pointer;box-shadow:0 6px 18px rgba(233,68,122,.35)}
+.btn.verde{background:var(--verde);box-shadow:0 6px 18px rgba(22,163,74,.3)}
+.btn.sec{background:#f1e8f5;color:var(--txt);box-shadow:none;font-size:15px;padding:13px}
+.file{display:flex;align-items:center;gap:12px;padding:12px;border:1.5px solid #f6dbe7;border-radius:14px;margin-bottom:10px;text-decoration:none;color:var(--txt)}
+.file .ic{width:42px;height:42px;border-radius:12px;background:#ffe3ee;display:grid;place-items:center;font-size:22px;flex:none}
+.file b{display:block;font-size:15px}
+.file small{color:var(--muted)}
+.file .dl{margin-left:auto;color:var(--rosa);font-weight:800;font-size:13px;white-space:nowrap}
+.file.done .dl{color:var(--verde)}
+.pay{border:2px dashed var(--rosa2);background:#fff9fb}
+.price{font:800 42px 'Baloo 2',sans-serif;color:var(--rosa);margin:6px 0}
+.muted{color:var(--muted);font-size:14px}
+.steps{display:grid;gap:10px;margin:14px 0}
+.step{display:flex;gap:12px;align-items:center;background:#faf5ff;border-radius:14px;padding:12px}
+.step span{width:30px;height:30px;border-radius:50%;background:var(--lila);color:#fff;display:grid;place-items:center;font-weight:800;flex:none}
+.up img{width:100%;border-radius:16px;display:block;margin-bottom:12px}
+.hidden{display:none!important}
+.tag{display:inline-block;background:#fff4dd;color:#b7791f;font-weight:800;font-size:12px;border-radius:99px;padding:4px 10px;margin-bottom:8px}
+.ok{background:#e8f9ee;color:var(--verde);border-radius:14px;padding:12px;font-weight:700;text-align:center;margin-top:10px}
+.install{position:fixed;left:12px;right:12px;bottom:12px;max-width:496px;margin:0 auto;background:var(--txt);color:#fff;border-radius:16px;padding:12px 14px;display:flex;gap:10px;align-items:center;font-size:14px;z-index:9}
+.install button{margin-left:auto;background:var(--rosa);color:#fff;border:0;border-radius:10px;padding:9px 12px;font-weight:800}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:10px 20px}
+</style>
+</head>
+<body>
+
+<!-- PANTALLA 1: OFERTA -->
+<section id="s-oferta">
+  <div class="hero">
+    <div class="em">👧🏻✂️🎀</div>
+    <h1>Universo de Muñecas</h1>
+    <p>Muñecas de papel, casitas, vestuarios y un curso para crear horas de juego <b>sin pantallas</b>.</p>
+    <span class="pill">✅ Recibes primero, pagas después</span>
+  </div>
+  <div class="wrap">
+    <div class="card">
+      <h2>¿Qué incluye tu kit?</h2>
+      <ul class="list">
+        <li>🧚 <span>Muñecas de papel: Hada, Bailarina, Princesa y Unicornio</span></li>
+        <li>🏠 <span>Casitas para armar: Casa de Dulces, Casita del Hada y Trailer</span></li>
+        <li>👗 <span>Vestuarios para combinar</span></li>
+        <li>🎓 <span>Curso de Muñecas de Papel paso a paso</span></li>
+        <li>🖨️ <span>Todo en PDF para imprimir en casa las veces que quieras</span></li>
+      </ul>
+      <div class="steps">
+        <div class="step"><span>1</span>Desbloquea y descarga tu kit ahora</div>
+        <div class="step"><span>2</span>Imprime y juega con tus peques</div>
+        <div class="step"><span>3</span>Después haces tu aporte de <b>&nbsp;$100 MXN</b></div>
+      </div>
+      <button class="btn" onclick="desbloquear()">🎁 Desbloquear mi kit</button>
+      <p class="muted" style="text-align:center;margin-top:10px">Producto digital con costo. Pago por SPEI u OXXO.</p>
+    </div>
+  </div>
+</section>
+
+<!-- PANTALLA 2: KIT -->
+<section id="s-kit" class="hidden">
+  <div class="hero" style="padding-bottom:60px">
+    <div class="em">🎉</div>
+    <h1>¡Tu kit está listo!</h1>
+    <p>Toca cada archivo para descargarlo e imprimirlo.</p>
+  </div>
+  <div class="wrap">
+    <div class="card">
+      <h2>📂 Universo de Muñecas</h2>
+      <div id="files-munecas"></div>
+    </div>
+
+    <div class="card pay" id="pay-munecas">
+      <span class="tag">PASO FINAL</span>
+      <h2>Tu aporte por el kit</h2>
+      <div class="price">$100 MXN</div>
+      <p class="muted">Ya recibiste todo. Confiamos en ti 💜 Haz tu aporte por SPEI u OXXO en el siguiente botón.</p>
+      <br>
+      <a class="btn verde" id="btn-pay-munecas" target="_blank" rel="noopener" onclick="pagar('munecas')">💳 Hacer mi aporte de $100</a>
+      <div class="ok hidden" id="ok-munecas">¡Gracias por tu aporte! 💜</div>
+    </div>
+
+    <!-- UPSELL -->
+    <div class="card up" id="up-oferta">
+      <span class="tag">OFERTA ESPECIAL</span>
+      <img src="actividades.jpg" alt="Kit de Actividades Creativas">
+      <h2>Kit de Actividades Creativas</h2>
+      <p>10 cuadernillos digitales en PDF por solo <b>$100 MXN</b> adicionales:</p>
+      <ul class="list">
+        <li>🎨 100 actividades sin pantallas</li>
+        <li>🔎 Pequeños Detectives</li>
+        <li>🛒 Mi Primera Tiendita</li>
+        <li>🎉 Mi Fiesta de Papel</li>
+        <li>🔤 Aprendo Jugando</li>
+        <li>📔 Mi Diario Creativo</li>
+        <li>🎲 Fiesta de Juegos</li>
+        <li>✂️ Pequeños Artistas</li>
+        <li>📖 Historias que Yo Invento</li>
+        <li>🗺️ Aventuras del Tesoro</li>
+      </ul>
+      <p class="muted">📲 Todo digital para imprimir en casa. Recibes primero y después pagas.</p>
+      <br>
+      <button class="btn" onclick="aceptarUpsell()">💜 Sí, lo quiero</button>
+      <br>
+      <button class="btn sec" onclick="rechazarUpsell()">No, gracias</button>
+    </div>
+
+    <div class="card hidden" id="up-kit">
+      <h2>📂 Kit de Actividades Creativas</h2>
+      <div id="files-actividades"></div>
+      <div class="pay card" style="box-shadow:none;margin:14px 0 0">
+        <h2>Tu aporte por las actividades</h2>
+        <div class="price">$100 MXN</div>
+        <a class="btn verde" id="btn-pay-act" target="_blank" rel="noopener" onclick="pagar('actividades')">💳 Hacer mi aporte de $100</a>
+        <div class="ok hidden" id="ok-actividades">¡Gracias por tu aporte! 💜</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="install hidden" id="install">📲 Instala la app para tener tu kit siempre a la mano <button id="btn-install">Instalar</button></div>
+<footer>Universo de Muñecas · Producto digital para imprimir en casa</footer>
+
+<script>
+// ===== CONFIG =====
+const PAY = {
+  munecas: 'https://xpag.global/pay/6434HTwf',
+  actividades: 'https://xpag.global/pay/6434HTwf'
+};
+const CDN='https://leona-production.b-cdn.net/';
+const MUNECAS=[
+ ['🧚','Hada','Muñeca de papel','2xj402kwlgjh9p997ges6umd0f5m'],
+ ['🩰','Bailarina','Muñeca de papel','fcaetc1sw4nl7jnui6e6q0zh0wtq'],
+ ['👑','Princesa','Muñeca de papel','hb2c36bd8mm61k0wi1bsl5isc1y5'],
+ ['🦄','Unicornio','Muñeca de papel','90x2enbjd4ae1wwa5pn7ani2jutg'],
+ ['👗','Vestuarios','Ropa para combinar','d1n3ae66he2pkyrwgwdk0h3kyeba'],
+ ['🍭','Casa de Dulces','Casita para armar','bu82d2el2q55e114j7eqrj2sv97c'],
+ ['🌸','Casita del Hada','Casita para armar','bknxz8kp1i67ex7qf8b3bmydos5e'],
+ ['🚐','Trailer','Casita para armar','hvgudiecrl6izbtskdo8krcvm6ss'],
+ ['🎓','Curso de Muñecas de Papel','Paso a paso','k1qckq2n2bjs4e0yikwhyy4wuo6f']
+];
+const ACTIVIDADES=[
+ ['🎨','100 Actividades sin pantallas','744z8v7fdtlebqqfvc0cnypw4pli'],
+ ['🔎','Pequeños Detectives','j2doh36p63dnsun6txrrokyqdlv0'],
+ ['🛒','Mi Primera Tiendita','384oassf3qo46expuzycrmzpvkwh'],
+ ['🎉','Mi Fiesta de Papel','ia3sktlu7q1xwvkojnl4tn6wtmte'],
+ ['🔤','Aprendo Jugando','fs8ml8cun885jpu0hvvdsw8bheqf'],
+ ['📔','Mi Diario Creativo','pl7pefse4ad95bjfysz6k161yg0x'],
+ ['🎲','Fiesta de Juegos','4uig47gnkxfz4wk7f33yk2qaspyp'],
+ ['✂️','Pequeños Artistas','5weuerwgffmbxswd6sj0x1l851yy'],
+ ['📖','Historias que Yo Invento','nwcd7aatuk6d350z9aa6ds7ym0qv'],
+ ['🗺️','Aventuras del Tesoro','unshy4x56zjmnk3hnhupntks497q']
+];
+
+// ===== estado (por dispositivo) =====
+const st=(()=>{try{return JSON.parse(localStorage.getItem('um')||'{}')}catch(e){return {}}})();
+const save=()=>{try{localStorage.setItem('um',JSON.stringify(st))}catch(e){}};
+const $=id=>document.getElementById(id);
+
+// guarda UTMs de la primera visita y las pasa al checkout
+const qs=new URLSearchParams(location.search);
+if(!st.utm){const u={};for(const [k,v] of qs){if(/^(utm_|fbclid|src|sck|xcod)/.test(k))u[k]=v}st.utm=u;save()}
+function payUrl(k){const u=new URL(PAY[k]);for(const [a,b] of Object.entries(st.utm||{}))u.searchParams.set(a,b);return u.toString()}
+
+function fileRow(ic,t,sub,id){const done=(st.dl||{})[id];return `<a class="file${done?' done':''}" href="${CDN+id}" target="_blank" rel="noopener" onclick="marcar('${id}',this)"><div class="ic">${ic}</div><div><b>${t}</b><small>${sub}</small></div><span class="dl">${done?'✓ Listo':'Descargar'}</span></a>`}
+function marcar(id,el){st.dl=st.dl||{};st.dl[id]=1;save();el.classList.add('done');el.querySelector('.dl').textContent='✓ Listo'}
+
+function render(){
+  $('s-oferta').classList.toggle('hidden',!!st.kit);
+  $('s-kit').classList.toggle('hidden',!st.kit);
+  $('files-munecas').innerHTML=MUNECAS.map(f=>fileRow(f[0],f[1],f[2],f[3])).join('');
+  $('files-actividades').innerHTML=ACTIVIDADES.map(f=>fileRow(f[0],f[1],'Cuadernillo PDF',f[2])).join('');
+  $('btn-pay-munecas').href=payUrl('munecas');
+  $('btn-pay-act').href=payUrl('actividades');
+  $('up-oferta').classList.toggle('hidden',!!st.up||!!st.noup);
+  $('up-kit').classList.toggle('hidden',!st.up);
+  $('ok-munecas').classList.toggle('hidden',!(st.pago||{}).munecas);
+  $('ok-actividades').classList.toggle('hidden',!(st.pago||{}).actividades);
+}
+function desbloquear(){st.kit=1;save();fbq('track','Lead',{content_name:'Universo de Muñecas'});render();scrollTo(0,0)}
+function aceptarUpsell(){st.up=1;save();fbq('track','AddToCart',{content_name:'Kit de Actividades Creativas',value:100,currency:'MXN'});render();setTimeout(()=>$('up-kit').scrollIntoView({behavior:'smooth'}),50)}
+function rechazarUpsell(){st.noup=1;save();render()}
+function pagar(k){st.pago=st.pago||{};st.pago[k]=1;save();fbq('track','InitiateCheckout',{content_name:k,value:100,currency:'MXN'});setTimeout(render,400)}
+render();
+
+// ===== instalar app =====
+let evt;addEventListener('beforeinstallprompt',e=>{e.preventDefault();evt=e;$('install').classList.remove('hidden')});
+$('btn-install').onclick=async()=>{if(evt){evt.prompt();await evt.userChoice}$('install').classList.add('hidden')};
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
