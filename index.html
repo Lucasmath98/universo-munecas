@@ -52,6 +52,9 @@ header small{font-size:12.5px;opacity:.85}
 footer{position:relative;z-index:2;padding:8px 8px calc(10px + env(safe-area-inset-bottom));display:flex;flex-wrap:wrap;gap:8px;justify-content:center;min-height:60px;align-items:center;background:#f0f2f5}
 .qr{background:#fff;border:0;border-radius:20px;padding:12px 18px;font-size:15px;font-weight:600;color:var(--head);box-shadow:0 1px 2px rgba(0,0,0,.2);cursor:pointer}
 .qr.main{background:var(--green);color:#fff}
+.payf{margin:8px -4px 2px;border-radius:8px;overflow:hidden;background:#fff;border:1px solid #e9edef}
+.payf iframe{display:block;width:100%;height:640px;border:0}
+.row:has(.payf) .b{max-width:96%;width:96%}
 .hint{color:var(--muted);font-size:13px;text-align:center}
 </style>
 </head>
@@ -74,7 +77,7 @@ const UPSELL_NODES_FROM=5267213, UPSELL_LINK='https://xpag.global/pay/6434HTwf';
 const SPEED=/fast=1/.test(location.search)?0.01:1;
 
 // ===== estado =====
-const KEY='umflow1';
+const KEY='umflow2';
 const st=(()=>{try{return JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){return {}}})();
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}};
 const qs=new URLSearchParams(location.search);
@@ -106,13 +109,13 @@ const first=n=>(n.c.find(c=>c[1]!=='timeout'&&c[1]!=='error'&&c[1]!=='failure')|
 async function runActions(n){
   for(const a of n.a){
     switch(a.k){
-      case 'd': await sleep(Math.min(a.s,4)*1000*0.6); break;
-      case 'msg': { if(/\{[a-z_.]+\}/i.test(clean(a.t)))break; const t=clean(a.t).trim(); if(!t)break; await typing(Math.min(3000,700+t.length*14)); add(fmt(t)); break; }
-      case 'image': await typing(1200); add(`<img src="${a.u}" alt="" loading="lazy">${a.cap?fmt(clean(a.cap)):''}`); break;
+      case 'd': await sleep(Math.min(a.s||2,25)*1000); break;
+      case 'msg': { if(/\{[a-z_.]+\}/i.test(clean(a.t)))break; const t=clean(a.t).trim(); if(!t)break; await sleep(700+Math.random()*900); await typing(a.td?Math.min(a.td,12)*1000:Math.max(1800,Math.min(7000,t.length*45))); add(fmt(t)); break; }
+      case 'image': await sleep(1200); await typing(2500); add(`<img src="${a.u}" alt="" loading="lazy">${a.cap?fmt(clean(a.cap)):''}`); break;
       case 'video': await typing(1200); add(`<video src="${a.u}" controls playsinline style="width:100%;max-width:300px;border-radius:6px"></video>`); break;
-      case 'audio': await typing(2500,true); add(`<audio src="${a.u}" controls preload="none"></audio>`); break;
+      case 'audio': await sleep(900); await typing(6000+Math.random()*3000,true); add(`<audio src="${a.u}" controls preload="none"></audio>`); break;
       case 'sticker': await sleep(600); add(`<img class="st" src="${a.u}" alt="">`,'them','stk'); break;
-      case 'file': await typing(500); add(`<a class="doc" href="${a.u}" target="_blank" rel="noopener" onclick="mark(this)"><div class="ic">PDF</div><div><b>${esc(a.n)}</b><small>PDF ${fmtSize(a.sz)}</small></div><span class="dl">↓</span></a>`); break;
+      case 'file': await sleep(900+Math.random()*900); add(`<a class="doc" href="${a.u}" target="_blank" rel="noopener" onclick="mark(this)"><div class="ic">PDF</div><div><b>${esc(a.n)}</b><small>PDF ${fmtSize(a.sz)}</small></div><span class="dl">↓</span></a>`); break;
     }
   }
 }
@@ -148,10 +151,17 @@ async function step(id){
     if(st.lastPay&&st.lastPayChain){st.lastPayChain=0;save();return conn(n,'charge_created')}
     const btns=payButtons(n,id);
     if(st.lastPay!==id){
-    await typing(1400);
-    add(`${btns.length>1?'Elige el monto de tu cooperación y paga por <b>SPEI u OXXO</b> aquí 👇':'Haz tu pago de <b>$'+btns[0][0]+' MXN</b> por <b>SPEI u OXXO</b> aquí 👇'}`+btns.map(([v,l])=>`<a class="cta" href="${withUtm(l)}" target="_blank" rel="noopener" onclick="payClick(${v})">💳 Pagar $${v} MXN</a>`).join(''));
-    st.lastPay=id;
-    const cc=conn(n,'charge_created'); st.lastPayChain=(cc&&N[cc]&&N[cc].t==='manipulator'&&N[first(N[cc])]?.t==='payment')?1:0; save();
+      await sleep(900); await typing(2500);
+      if(btns.length>1){
+        add('Puedes elegir el valor de tu cooperación 👇');
+        const v=await ask(btns.map(([v],i)=>['$'+v+' MXN',v,i===0]));
+        btns.splice(0,btns.length,btns.find(b=>b[0]===v));
+        await typing(2200);
+      }
+      const [v,l]=btns[0];
+      add('Aquí puedes hacer tu pago de <b>$'+v+' MXN</b> por <b>SPEI u OXXO</b> sin salir de la conversación 👇<div class="payf"><iframe src="'+withUtm(l)+'" loading="lazy"></iframe></div>');
+      payClick(v);
+      st.lastPay=id; save();
     }
     let r=await ask([['Ya pagué ✅','ok',1],['Pago más tarde','later']]);
     if(r==='later'){await typing(1200);add('¡Sin problema, corazón! 💜 Cuando hagas tu pago, regresa aquí y toca <b>"Ya pagué"</b>.');await ask([['Ya pagué ✅','ok',1]])}
