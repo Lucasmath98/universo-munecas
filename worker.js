@@ -1,5 +1,5 @@
 // Universo de Muñecas — backend (Cloudflare Worker)
-// Secrets: XPAG_ID, XPAG_SECRET, OPENAI_KEY (sin KV)
+// Secrets: XPAG_ID, XPAG_SECRET, OPENAI_KEY, UTMIFY_TOKEN (sin KV)
 const ORIGINS = ['https://lucasmath98.github.io'];
 const XPAG = 'https://api.xpag.global';
 
@@ -41,8 +41,34 @@ async function xget(env, q) {
   try { return await r.json(); } catch (e) { return {}; }
 }
 
+const b64e = o => btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+const b64d = s => { try { s = s.replace(/-/g, '+').replace(/_/g, '/'); return JSON.parse(decodeURIComponent(escape(atob(s)))); } catch (e) { return null; } };
+const utcNow = () => new Date().toISOString().replace('T', ' ').slice(0, 19);
+const UTM_KEYS = ['src', 'sck', 'utm_source', 'utm_campaign', 'utm_medium', 'utm_content', 'utm_term'];
+
+async function utmify(env, m, status, amount, method) {
+  if (!env.UTMIFY_TOKEN || !m) return;
+  const cents = Math.round(Number(amount || m.a || 0) * 100);
+  const tp = {}; for (const k of UTM_KEYS) tp[k] = (m.u && m.u[k]) || null;
+  const body = {
+    orderId: m.i + '-' + m.s,
+    platform: 'UniversoMunecas',
+    paymentMethod: method === 'oxxo' ? 'boleto' : 'pix',
+    status,
+    createdAt: m.t || utcNow(),
+    approvedDate: status === 'paid' ? utcNow() : null,
+    refundedAt: null,
+    customer: { name: 'Cliente', email: m.i + '@universomunecas.app', phone: null, document: null, country: 'MX' },
+    products: [{ id: m.s, name: m.p || 'Universo de Muñecas', planId: null, planName: null, quantity: 1, priceInCents: cents }],
+    trackingParameters: tp,
+    commission: { totalPriceInCents: cents, gatewayFeeInCents: 0, userCommissionInCents: cents, currency: 'MXN' },
+    isTest: false,
+  };
+  await fetch('https://api.utmify.com.br/api-credentials/orders', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-token': env.UTMIFY_TOKEN }, body: JSON.stringify(body) }).catch(() => {});
+}
+
 export default {
-  async fetch(req, env) {
+  async fetch(req, env, ctx) {
     const url = new URL(req.url);
     if (req.method === 'OPTIONS') return new Response(null, { headers: cors(req) });
 
@@ -54,9 +80,12 @@ export default {
       if (!sid || !stage) return json(req, { ok: false, error: 'missing' }, 400);
       const eid = sid + '-' + stage;
       const name = String(b.name || 'Cliente').slice(0, 60);
+      const u = {}; if (b.utm && typeof b.utm === 'object') for (const k of UTM_KEYS) if (b.utm[k]) u[k] = String(b.utm[k]).slice(0, 150);
+      const meta = { i: sid, s: stage, a: amount, p: String(b.desc || 'Universo de Muñecas').slice(0, 60), u, t: utcNow() };
+      const wh = url.origin + '/wh?d=' + b64e(meta);
       const [spei, oxxo] = await Promise.all([
-        xpag(env, { currency: 'MXN', external_id: eid + '-s', name, description: b.desc || 'Universo de Muñecas' }),
-        xpag(env, { currency: 'MXN', method: 'OXXO', amount, external_id: eid + '-o' + amount + '-' + Date.now().toString(36), generateCheckout: false, payerData: { name } }),
+        xpag(env, { currency: 'MXN', external_id: eid + '-s', webhook_url: wh, name, description: b.desc || 'Universo de Muñecas' }),
+        xpag(env, { currency: 'MXN', method: 'OXXO', amount, external_id: eid + '-o' + amount + '-' + Date.now().toString(36), webhook_url: wh, generateCheckout: false, payerData: { name } }),
       ]);
       const out = {
         ok: !!(spei.clabe || oxxo.payee_data),
@@ -70,7 +99,22 @@ export default {
         err: spei.clabe ? undefined : (spei.error_code || spei.message || spei.status),
         err_oxxo: oxxo.payee_data ? undefined : (oxxo.error_code || oxxo.message || oxxo.status),
       };
+      if (out.ok && ctx) ctx.waitUntil(utmify(env, meta, 'waiting_payment', amount, 'spei'));
       return json(req, out);
+    }
+
+    // Webhook XPag -> confirma y manda la venta a la UTMify
+    if (url.pathname === '/wh' && req.method === 'POST') {
+      const m = b64d(url.searchParams.get('d') || '');
+      const b = await req.json().catch(() => ({}));
+      if (m && b.type === 'cashin' && b.status === 'confirmed') {
+        // verifica en la XPag antes de registrar
+        const q = b.request_number ? 'request_number=' + encodeURIComponent(b.request_number) : 'external_id=' + encodeURIComponent(b.external_id || '');
+        const v = await xget(env, q);
+        const ok = v.status === 'confirmed' || (v.payments || []).some(x => x.status === 'confirmed');
+        if (ok) await utmify(env, m, 'paid', b.amount || m.a, /OXXO|oxxo|-o\d/.test(String(b.external_id || b.request_number || '')) ? 'oxxo' : 'spei');
+      }
+      return new Response('ok');
     }
 
     // Consultar si ya pagó

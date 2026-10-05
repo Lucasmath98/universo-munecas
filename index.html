@@ -194,7 +194,7 @@ async function step(id){
       }
       const [v,l]=btns[0];
       await sleep(600); await typing(2500);
-      const d=await api('/charge',{sid:st.sid,stage,amount:v,desc:id>=UPSELL_NODES_FROM?'Kit de Actividades Creativas':'Universo de Muñecas'});
+      const d=await api('/charge',{sid:st.sid,stage,amount:v,utm:st.utm,desc:id>=UPSELL_NODES_FROM?'Kit de Actividades Creativas':'Universo de Muñecas'});
       const clabe=(d&&d.clabe)||CLABE;
       st.clabe=clabe;
       add(fmt('🏦 *CLABE* (18 dígitos):\n'+clabe+'\n*Banco*: '+((d&&d.clabe&&d.bank)||'FINCO PAY')+'\n*Beneficiario*: '+((d&&d.clabe&&d.beneficiary)||'Zypher Servicios')+'\n*Persona*: María Fernanda García'));
