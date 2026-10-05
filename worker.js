@@ -1,5 +1,5 @@
 // Universo de Muñecas — backend (Cloudflare Worker)
-// Secrets: XPAG_ID, XPAG_SECRET, OPENAI_KEY, UTMIFY_TOKEN (sin KV)
+// Secrets: XPAG_ID, XPAG_SECRET, OPENAI_KEY, UTMIFY_TOKEN, LEONA_WH (sin KV)
 const ORIGINS = ['https://lucasmath98.github.io'];
 const XPAG = 'https://api.xpag.global';
 
@@ -115,6 +115,17 @@ export default {
         if (ok) await utmify(env, m, 'paid', b.amount || m.a, /OXXO|oxxo|-o\d/.test(String(b.external_id || b.request_number || '')) ? 'oxxo' : 'spei');
       }
       return new Response('ok');
+    }
+
+    // Lead de la app -> dispara el funil de cobranza en Leona (WhatsApp)
+    if (url.pathname === '/lead' && req.method === 'POST') {
+      const b = await req.json().catch(() => ({}));
+      let phone = String(b.phone || '').replace(/\D/g, '');
+      if (phone.length === 10) phone = '52' + phone;
+      if (phone.length === 13 && phone.startsWith('521')) phone = '52' + phone.slice(3);
+      if (!/^52\d{10}$/.test(phone) || !env.LEONA_WH) return json(req, { ok: false });
+      const r = await fetch(env.LEONA_WH, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nome: String(b.name || 'Cliente').slice(0, 60), telefone: phone, valor: String(Number(b.amount) || ''), origem: 'app', sid: clean(b.sid, 40) }) }).catch(() => null);
+      return json(req, { ok: !!(r && r.ok) });
     }
 
     // Consultar si ya pagó

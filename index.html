@@ -120,6 +120,7 @@ async function onSend(e){e.preventDefault();const inp=document.getElementById('i
   while(busy)await new Promise(r=>setTimeout(r,300));
   const p=pending;
   if(p&&!p.ai){p.res(p.list[0][1]);return}
+  if(p&&p.ai&&p.ai.capture){p.res('#'+text);return}
   busy=true;
   try{
     const r=await api('/chat',{sid:st.sid,text,history:st.hist.slice(0,-1),options:p&&p.ai?p.ai.options:[],context:'Tu nombre es María Fernanda García (no Sofía). '+((p&&p.ai&&p.ai.context)||lastThem())});
@@ -209,6 +210,19 @@ async function step(id){
         add('O, si lo prefieres, realiza tu pago mediante OXXO a continuación 👇🏻<a class="cta" href="#" onclick="oxxo(this,\''+withUtm(l)+'\');return false">🏪 Pagar en OXXO</a>');
       }
       payClick(v);
+      if(!st.wa){
+        await sleep(1500); await typing(2500);
+        add('¿Quieres que te mande tus datos de pago por WhatsApp para que no se te pierdan? 📲💕');
+        const w=await ask([['Sí, mándamelos 📲','y',1],['No, gracias','n']],{capture:true});
+        let num=null;
+        const wd=(w&&w[0]==='#')?w.slice(1).replace(/\D/g,''):'';
+        if(wd.length>=10)num=wd;
+        else if(w==='y'||(w&&w[0]==='#')){await typing(1500);add('¡Claro! Escríbeme tu número de WhatsApp a 10 dígitos 👇 (ej: 55 1234 5678)');
+          for(let k=0;k<3&&!num;k++){const t=await ask([],{capture:true});const d=String(t).replace(/\D/g,'');if(d.length===10||(d.length===12&&d.startsWith('52'))||(d.length===13&&d.startsWith('521'))){num=d}else{await typing(1200);add('Mmm, parece que falta algún número 🤔 Escríbelo a 10 dígitos, por ejemplo: 55 1234 5678')}}
+        }
+        if(num){st.wa=num;save();api('/lead',{sid:st.sid,phone:num,amount:v});await typing(1800);add('¡Listo! 💕 Te escribo por WhatsApp en un ratito con tus datos.')}
+        else{st.wa='no';save()}
+      }
       pd=st.pay[id]={v,api:!!(d&&(d.clabe||d.oxxo_ref)),rn:d&&d.oxxo_rn||''}; save();
     }
     if(pd.api){
