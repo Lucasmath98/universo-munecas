@@ -66,8 +66,8 @@ header small{font-size:12.5px;opacity:.85}
 <body>
 <div class="app">
   <header>
-    <img class="av" src="avatar.jpg" alt="Sofía">
-    <div><b>Sofía Hernández</b><small id="status">en línea</small></div>
+    <img class="av" src="avatar.jpg" alt="María Fernanda">
+    <div><b>María Fernanda García</b><small id="status">en línea</small></div>
   </header>
   <div id="chat"><div class="day">HOY</div></div>
   <div id="opts"><span class="hint">Cargando…</span></div>
@@ -102,7 +102,7 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms*SPEED));
 const down=()=>{chat.scrollTop=chat.scrollHeight};
 const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
 const fmt=s=>esc(s).replace(/(https?:\/\/[^\s<]+)/g,'\n<a href="$1" target="_blank" rel="noopener" style="color:#027eb5;word-break:break-all">$1</a>\n').replace(/\n{3,}/g,'\n\n').replace(/\*([^*\n]+)\*/g,'<b>$1</b>').replace(/(^|\s)_([^_\n]+)_/g,'$1<i>$2</i>').replace(/~([^~\n]+)~/g,'<s>$1</s>');
-const clean=s=>String(s).replace(/\{(first_name|full_name|name|nome|primeiro_nome)\}/gi,'').replace(/ +([,!?.])/g,'$1').replace(/[ \t]{2,}/g,' ');
+const clean=s=>String(s).replace(/Sofía Hernández/g,'María Fernanda García').replace(/Sofía/g,'María Fernanda').replace(/\{(first_name|full_name|name|nome|primeiro_nome)\}/gi,'').replace(/ +([,!?.])/g,'$1').replace(/[ \t]{2,}/g,' ');
 function persist(){st.html=chat.innerHTML;save()}
 function add(html,who='them',cls=''){shown=1;const r=document.createElement('div');r.className='row '+(who==='me'?'me ':'')+(last!==who?'first ':'')+cls;last=who;r.innerHTML=`<div class="b">${html}<span class="t">${now()}</span></div>`;chat.appendChild(r);down();try{const t=r.querySelector('.b').innerText.replace(/\s*\d{1,2}:\d{2}.*$/,'').trim();if(t){st.hist.push({me:who==='me',t:t.slice(0,600)});st.hist=st.hist.slice(-20)}}catch(e){}persist();return r}
 async function typing(ms,rec){status.textContent=rec?'grabando audio...':'escribiendo...';const r=document.createElement('div');r.className='row typing';r.innerHTML='<div class="b"><i></i><i></i><i></i></div>';chat.appendChild(r);down();await sleep(ms);r.remove();status.textContent='en línea'}
@@ -119,7 +119,7 @@ async function onSend(e){e.preventDefault();const inp=document.getElementById('i
   if(p&&!p.ai){p.res(p.list[0][1]);return}
   busy=true;
   try{
-    const r=await api('/chat',{sid:st.sid,text,history:st.hist.slice(0,-1),options:p&&p.ai?p.ai.options:[],context:(p&&p.ai&&p.ai.context)||lastThem()});
+    const r=await api('/chat',{sid:st.sid,text,history:st.hist.slice(0,-1),options:p&&p.ai?p.ai.options:[],context:'Tu nombre es María Fernanda García (no Sofía). '+((p&&p.ai&&p.ai.context)||lastThem())});
     if(!r){ if(p&&p.ai&&p.ai.options.length){p.res(p.ai.map.positivo);return} await typing(1500);add('¡Gracias, corazón! 💕');return }
     if(p&&p.ai&&p.ai.map&&p.ai.map[r.intent]!==undefined&&pending===p){p.res(p.ai.map[r.intent]);return}
     if(r.reply){await sleep(800);await typing(Math.max(1500,Math.min(6000,r.reply.length*40)));add(fmt(r.reply))}
@@ -140,7 +140,7 @@ async function runActions(n){
   for(const a of n.a){
     switch(a.k){
       case 'd': if(!shown)break; await sleep(Math.min(a.s||2,8)*1000); break;
-      case 'msg': { if(/\{[a-z_.]+\}/i.test(clean(a.t)))break; const t=clean(a.t).trim(); if(!t)break; if(shown)await sleep(700+Math.random()*900); await typing(!shown?1500:a.td?Math.min(a.td,12)*1000:Math.max(1800,Math.min(7000,t.length*45))); add(fmt(t)); break; }
+      case 'msg': { if(/\{[a-z_.]+\}/i.test(clean(a.t)))break; const t=clean(a.t).trim(); if(!t)break; if(shown)await sleep(700+Math.random()*900); await typing(!shown?1500:a.td?Math.min(a.td,12)*1000:Math.max(1800,Math.min(7000,t.length*45))); add(fmt(t)); if(!st.welcome){st.welcome=1;save();await sleep(1200);await typing(2500);add('<img src="welcome.jpg" alt="Universo de Muñecas">')} break; }
       case 'image': await sleep(1200); await typing(2500); add(`<img src="${a.u}" alt="" loading="lazy">${a.cap?fmt(clean(a.cap)):''}`); break;
       case 'video': await typing(1200); add(`<video src="${a.u}" controls playsinline style="width:100%;max-width:300px;border-radius:6px"></video>`); break;
       case 'audio': await sleep(900); await typing(6000+Math.random()*3000,true); add(`<audio src="${a.u}" controls preload="none"></audio>`); break;
@@ -194,7 +194,7 @@ async function step(id){
       const d=await api('/charge',{sid:st.sid,stage,amount:v,desc:id>=UPSELL_NODES_FROM?'Kit de Actividades Creativas':'Universo de Muñecas'});
       const clabe=(d&&d.clabe)||CLABE;
       st.clabe=clabe;
-      add(fmt('🏦 *CLABE* (18 dígitos):\n'+clabe+'\n*Banco*: '+((d&&d.clabe&&d.bank)||'FINCO PAY')+'\n*Beneficiario*: '+((d&&d.clabe&&d.beneficiary)||'Zypher Servicios')+'\n*Persona*: Sofía Hernández'));
+      add(fmt('🏦 *CLABE* (18 dígitos):\n'+clabe+'\n*Banco*: '+((d&&d.clabe&&d.bank)||'FINCO PAY')+'\n*Beneficiario*: '+((d&&d.clabe&&d.beneficiary)||'Zypher Servicios')+'\n*Persona*: María Fernanda García'));
       await sleep(1500); await typing(1500);
       add(clabe+'<a class="cta" href="#" onclick="copyClabe(this);return false">📋 Copiar CLABE</a>');
       await sleep(1500); await typing(3000);
