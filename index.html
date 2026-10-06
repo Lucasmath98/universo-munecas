@@ -209,7 +209,6 @@ async function step(id){
     if(pos||neg){
       const r=await ask([['¡Sí, claro! 💕','p',1],...(neg?[['No, gracias','n']]:[])],{options:neg?['positivo','negativo','duvida']:['positivo','duvida'],map:neg?{positivo:'p',negativo:'n'}:{positivo:'p'},context:lastThem()});
       if(r==='p'&&!st.lead){st.lead=1;save();fbq('track','Lead')}
-      if(r==='p'&&!st.wa){await askWhats('¡Perfecto! 💕 Antes de enviarte todo, ¿me compartes tu WhatsApp? Así te ayudo si tienes alguna duda con tu kit 📲',['Sí, te lo paso 📲','Prefiero no'])}
       return r==='p'?pos:neg;
     }
     if(comp){await ask([['Ya hice mi pago ✅',1,1]]);return comp}
@@ -245,13 +244,12 @@ async function step(id){
         add('O, si lo prefieres, realiza tu pago mediante OXXO a continuación 👇🏻<a class="cta" href="#" onclick="oxxo(this,\''+withUtm(l)+'\');return false">🏪 Pagar en OXXO</a>');
       }
       payClick(v);
-      if(!st.wa){ await askWhats('¿Quieres que te mande tus datos de pago por WhatsApp para que no se te pierdan? 📲💕',['Sí, mándamelos 📲','No, gracias']); }
       if(st.wa&&st.wa!=='no'&&!st.leadSent){st.leadSent=1;save();api('/lead',{sid:st.sid,phone:st.wa,amount:v});}
       pd=st.pay[id]={v,api:!!(d&&(d.clabe||d.oxxo_ref)),rn:d&&d.oxxo_rn||''}; save();
     }
     if(pd.api){
       let stop=false;
-      const paid=(async()=>{while(!stop){const r=await api('/status?sid='+st.sid+'&stage='+stage+'&rn='+encodeURIComponent(pd.rn||''));if(r&&r.paid)return r;await new Promise(r=>setTimeout(r,8000))}})();
+      const t0=Date.now();const paid=(async()=>{while(!stop&&Date.now()-t0<3*3600e3){const r=await api('/status?sid='+st.sid+'&stage='+stage+'&rn='+encodeURIComponent(pd.rn||''));if(r&&r.paid)return r;await new Promise(r=>setTimeout(r,Date.now()-t0<600e3?8000:30000))}})();
       while(true){
         const r=await Promise.race([paid.then(x=>({paid:x})),ask([['Ya pagué ✅','ok',1]],{options:[],context:'La clienta está por pagar $'+pd.v+' MXN por SPEI u OXXO.'})]);
         if(r&&r.paid){stop=true;if(pending)pending.res(null);fbq('track','Purchase',{value:r.paid.amount||pd.v,currency:'MXN'});await typing(1800);add('✅ ¡Pago confirmado! Muchas gracias, corazón 💕');break}
