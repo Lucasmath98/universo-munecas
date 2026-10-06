@@ -150,13 +150,13 @@ const first=n=>(n.c.find(c=>c[1]!=='timeout'&&c[1]!=='error'&&c[1]!=='failure')|
 async function runActions(n){
   for(const a of n.a){
     switch(a.k){
-      case 'd': if(!shown)break; await sleep(Math.min(a.s||2,8)*1000); break;
-      case 'msg': { if(/\{[a-z_.]+\}/i.test(clean(a.t)))break; const t=clean(a.t).trim(); if(!t)break; if(shown)await sleep(700+Math.random()*900); await typing(!shown?1500:a.td?Math.min(a.td,12)*1000:Math.max(1800,Math.min(7000,t.length*45))); add(fmt(t)); if(!st.welcome){st.welcome=1;save();await sleep(1200);await typing(2500);add('<img src="welcome.jpg" alt="Universo de Muñecas">')} break; }
-      case 'image': await sleep(1200); await typing(2500); add(`<img src="${a.u}" alt="" loading="lazy">${a.cap?fmt(clean(a.cap)):''}`); break;
+      case 'd': if(!shown)break; await sleep(Math.min(a.s||2,2)*600); break;
+      case 'msg': { if(/\{[a-z_.]+\}/i.test(clean(a.t)))break; const t=clean(a.t).trim(); if(!t)break; if(shown)await sleep(300+Math.random()*400); await typing(!shown?900:Math.max(1000,Math.min(2600,t.length*14))); add(fmt(t)); if(!st.welcome){st.welcome=1;save();await sleep(400);await typing(1000);add('<img src="welcome.jpg" alt="Universo de Muñecas">')} break; }
+      case 'image': await sleep(400); await typing(1200); add(`<img src="${a.u}" alt="" loading="lazy">${a.cap?fmt(clean(a.cap)):''}`); break;
       case 'video': await typing(1200); add(`<video src="${a.u}" controls playsinline style="width:100%;max-width:300px;border-radius:6px"></video>`); break;
-      case 'audio': await sleep(900); await typing(6000+Math.random()*3000,true); add(`<audio src="${a.u}" controls preload="none"></audio>`); break;
+      case 'audio': await sleep(400); await typing(2500,true); add(`<audio src="${a.u}" controls preload="none"></audio>`); break;
       case 'sticker': await sleep(600); add(`<img class="st" src="${a.u}" alt="">`,'them','stk'); break;
-      case 'file': await sleep(900+Math.random()*900); add(`<a class="doc" href="${a.u}" target="_blank" rel="noopener" onclick="mark(this)"><div class="ic">PDF</div><div><b>${esc(a.n)}</b><small>PDF ${fmtSize(a.sz)}</small></div><span class="dl">↓</span></a>`); break;
+      case 'file': await sleep(250+Math.random()*250); add(`<a class="doc" href="${a.u}" target="_blank" rel="noopener" onclick="mark(this)"><div class="ic">PDF</div><div><b>${esc(a.n)}</b><small>PDF ${fmtSize(a.sz)}</small></div><span class="dl">↓</span></a>`); break;
     }
   }
 }
@@ -221,24 +221,24 @@ async function step(id){
     const stage='p'+id;
     let pd=st.pay[id];
     if(!pd){
-      await sleep(900); await typing(2500);
+      await sleep(500); await typing(1300);
       if(btns.length>1){
         add('Puedes elegir el valor de tu cooperación 👇');
         const v=await ask(btns.map(([v],i)=>['$'+v+' MXN',v,i===0]));
         btns.splice(0,btns.length,btns.find(b=>b[0]===v));
       }
       const [v,l]=btns[0];
-      await sleep(600); await typing(2500);
+      await sleep(500); await typing(1300);
       const d=await api('/charge',{sid:st.sid,stage,amount:v,utm:st.utm,desc:id>=UPSELL_NODES_FROM?'Kit de Actividades Creativas':'Universo de Muñecas'});
       const clabe=(d&&d.clabe)||CLABE;
       st.clabe=clabe;
       add(fmt('🏦 *CLABE* (18 dígitos):\n'+clabe+'\n*Banco*: '+((d&&d.clabe&&d.bank)||'FINCO PAY')+'\n*Beneficiario*: '+((d&&d.clabe&&d.beneficiary)||'Zypher Servicios')+'\n*Persona*: María Fernanda García'));
-      await sleep(1500); await typing(1500);
+      await sleep(500); await typing(1300);
       add(clabe+'<a class="cta" href="#" onclick="copyClabe(this);return false">📋 Copiar CLABE</a>');
-      await sleep(1500); await typing(3000);
+      await sleep(500); await typing(1300);
       if(d&&d.oxxo_ref){
         add('O, si lo prefieres, realiza tu pago mediante OXXO a continuación 👇🏻');
-        await sleep(1200); await typing(2000);
+        await sleep(500); await typing(1300);
         add('<div class="oxxo">'+(d.oxxo_barcode?'<img src="'+d.oxxo_barcode+'" alt="">':'')+'</div>'+fmt('🏪 *OXXO* · Referencia:\n'+d.oxxo_ref+'\nMonto exacto: *$'+v+' MXN*'));
       }else{
         add('O, si lo prefieres, realiza tu pago mediante OXXO a continuación 👇🏻<a class="cta" href="#" onclick="oxxo(this,\''+withUtm(l)+'\');return false">🏪 Pagar en OXXO</a>');
